@@ -6,10 +6,12 @@ import com.zack.projects.chatapp.conversationservice.repository.ConversationRepo
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -18,30 +20,41 @@ public class ConversationService {
     @Autowired
     private ConversationRepository conversationRepository;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     public Collection<Message> getConversation(String userA, String userB) {
 
-        // TODO: rest call to user service to check if userA and userB exist
+        boolean userAIsRegistered =
+                restTemplate.getForObject("http://USER-SERVICE/users/registered/" + userA, Boolean.class);
 
-        Conversation conversation;
-        Timestamp dateStarted = new Timestamp(System.currentTimeMillis());
+        boolean userBIsRegistered =
+                restTemplate.getForObject("http://USER-SERVICE/users/registered/" + userB, Boolean.class);
 
-        log.info(String.format
-                ("Retrieving conversation between [%s] and [%s]", userA, userB));
+        if(userAIsRegistered && userBIsRegistered) {
+            Conversation conversation;
+            Timestamp dateStarted = new Timestamp(System.currentTimeMillis());
 
-        conversation = conversationRepository.findConversationByConversationId(userA, userB);
+            log.info(String.format
+                    ("Retrieving conversation between [%s] and [%s]", userA, userB));
 
-        if(conversation != null) {
-            // TODO: rest request to message service to get conversation messages and send a list of messages
+            conversation = conversationRepository.findConversationByConversationId(userA, userB);
+
+            if(conversation != null) {
+                return restTemplate.getForObject(
+                        "http://MESSAGE-SERVICE/messages/load/" + userA + "/" + userB, List.class);
+            }
+
+            log.info(String.format
+                    ("Conversation between [%s] and [%s] does not exist yet, " +
+                            "creating one and returning an empty list of messages", userA, userB));
+
+            conversation = new Conversation(userA, userB, dateStarted);
+            conversationRepository.save(conversation);
             return new ArrayList<>();
         }
 
-        log.info(String.format
-                ("Conversation between [%s] and [%s] does not exist yet, " +
-                        "creating one and returning an empty list of messages", userA, userB));
-
-        conversation = new Conversation(userA, userB, dateStarted);
-        conversationRepository.save(conversation);
-        return new ArrayList<>();
+        return null;
 
     }
 }
