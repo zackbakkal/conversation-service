@@ -12,7 +12,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/chatapp
     username: chatappuser
-    password:
+    password: 
     driverClassName: org.postgresql.Driver
   devtools:
     restart:
@@ -32,3 +32,4 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     hostname: localhost
+
