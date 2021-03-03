@@ -14,9 +14,28 @@ public class ConversationController {
     @Autowired
     private ConversationService conversationService;
 
+    @GetMapping("/alive")
+    public String alive() {
+        return "CONVERSATION-SERVICE: (ok)";
+    }
+
+    @GetMapping
+    public String falbackUri() {
+        return "Conversation service is unavailable, please try again later";
+    }
+
     @GetMapping("/{userA}/{userB}")
     public Collection<Message> getConversation(@PathVariable String userA, @PathVariable String userB) {
         return conversationService.getConversation(userA, userB);
+    }
+
+    @GetMapping("/{userA}/{userB}/{from}/{to}")
+    public Collection<Message> getMessagesByNumber(
+            @PathVariable String userA,
+            @PathVariable String userB,
+            @PathVariable int from,
+            @PathVariable int to) {
+        return conversationService.getMessagesByNumber(userA, userB, from, to);
     }
 
 }
